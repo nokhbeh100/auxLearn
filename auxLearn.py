@@ -244,36 +244,3 @@ def trainForEpoches(model, trainSet, testSet, optimizer, criterion, N_EPOCHS = 5
         resultFile.flush()
     model.load_state_dict(torch.load( os.path.join(bestPlace,'temp-best.pt') ))
 
-
-# loading dataset based on a folder and spliting at the same time, mainly used for image datasets
-def loadDataset(folder, transform, p1=.6, p2=.2, p3=.2, loader=plt.imread, shuffle=False, num_workers=4, batch_size=4):
-    
-    dataset = torchvision.datasets.ImageFolder(folder, loader=plt.imread, transform=transform )
-    
-    trainSet, testSet, validSet = trainTestValid( dataset, p1, p2, p3)
-    
-    trainLoader = torch.utils.data.DataLoader(trainSet, batch_size=batch_size,
-                                             shuffle=shuffle, num_workers=num_workers)
-    
-    testLoader = torch.utils.data.DataLoader(testSet, batch_size=batch_size,
-                                             shuffle=shuffle, num_workers=num_workers)
-    
-    validLoader = torch.utils.data.DataLoader(validSet, batch_size=batch_size,
-                                             shuffle=shuffle, num_workers=num_workers)
-    return trainLoader, testLoader, validLoader
-
-
-
-def resize(img, size=(227,227)):
-    return np.array(Image.fromarray(img).resize(size, resample=Image.BOX), dtype='double')
-
-def gray2rgb(x):
-    if len(x.shape) == 3:
-        if x.shape[-1] == 4: #RGBA to RGB
-            x = x[:,:, :3]
-    if len(x.shape) == 2:
-        x = np.repeat(x.reshape(x.shape+(1,)), 3, axis=2)
-    return x
-
-
-
