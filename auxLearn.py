@@ -22,6 +22,16 @@ import progressbar
 from PIL import Image
 #%%
 
+def sampleToBatch(example):
+    example = example.reshape((1,)+example.shape)
+    return example
+
+def toCuda(example):
+    if CUDA:
+        return example.cuda()
+    else:
+        return example.cpu()
+
 # object for spliting datasets, (instead of using sklearn split_train_test)
 class segmentedDataset(data.Dataset):
     def __init__(self, motherDataset, start, end, perm):
