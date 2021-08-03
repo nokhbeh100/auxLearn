@@ -48,7 +48,7 @@ def resize(img, size=(227,227)):
 
 def keepAspectResize(img, size=(227,227)):
     ratio = min(size[0]/img.shape[0], size[1]/img.shape[1])
-    return np.array(Image.fromarray(img.astype(np.double)).resize((ratio*size[0], ratio*size[1]), resample=Image.BOX), dtype='double')
+    return np.array(Image.fromarray(img.astype(np.double)).resize((int(ratio*img.shape[0]), int(ratio*img.shape[1])), resample=Image.BOX), dtype='double')
 
 def gray2rgb(x):
     if len(x.shape) == 3:
