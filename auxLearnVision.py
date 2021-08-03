@@ -44,7 +44,11 @@ def loadDataset(folder, transform, p1=.6, p2=.2, p3=.2, loader=plt.imread, shuff
 
 
 def resize(img, size=(227,227)):
-    return np.array(Image.fromarray(img).resize(size, resample=Image.BOX), dtype='double')
+    return np.array(Image.fromarray(img.astype(np.double)).resize(size, resample=Image.BOX), dtype='double')
+
+def keepAspectResize(img, size=(227,227)):
+    ratio = min(size[0]/img.shape[0], size[1]/img.shape[1])
+    return np.array(Image.fromarray(img.astype(np.double)).resize((ratio*size[0], ratio*size[1]), resample=Image.BOX), dtype='double')
 
 def gray2rgb(x):
     if len(x.shape) == 3:
