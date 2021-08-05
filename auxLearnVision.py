@@ -48,11 +48,11 @@ def resize(img, size=(227,227)):
 
 def keepAspectResize(img, size=(227,227)):
     ratio = min(size[0]/img.shape[0], size[1]/img.shape[1])
-    return np.array(Image.fromarray(img.astype(np.double)).resize((int(ratio*img.shape[0]), int(ratio*img.shape[1])), resample=Image.BOX), dtype='double')
+    return np.array(Image.fromarray(img.astype(np.double)).resize((round(ratio*img.shape[0]), round(ratio*img.shape[1])), resample=Image.BOX), dtype='double')
 
 def StretchResize(img, size=(227,227)):
     ratio = max(size[0]/img.shape[0], size[1]/img.shape[1])
-    img = np.array(Image.fromarray(img.astype(np.double)).resize((int(ratio*img.shape[0]), int(ratio*img.shape[1])), resample=Image.BOX), dtype='double')
+    img = np.array(Image.fromarray(img.astype(np.double)).resize((round(ratio*img.shape[0]), round(ratio*img.shape[1])), resample=Image.BOX), dtype='double')
     return img[img.shape[0]//2-size[0]//2:img.shape[0]//2+size[0]//2,img.shape[1]//2-size[1]//2:img.shape[1]//2+size[1]//2]
 
 def gray2rgb(x):
