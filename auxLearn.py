@@ -26,6 +26,10 @@ def sampleToBatch(example):
     example = example.reshape((1,)+example.shape)
     return example
 
+def batchToSample(example):
+    return example.reshape(example.shape[1:])
+
+
 def toCuda(example):
     if CUDA:
         return example.cuda()
@@ -44,8 +48,10 @@ class segmentedDataset(data.Dataset):
     def __getitem__(self, i):
         return self.mother[self.perm[self.start+i]]
 #%%
-def trainTestValid(mother, p1, p2, p3):
+def trainTestValid(mother, p1, p2, p3, seed=None):
     perm = list(range(len(mother)))
+    if type(seed) is int:
+        random.seed(seed)    
     random.shuffle(perm)
     s1 = segmentedDataset(mother, 0, round(p1*len(mother)), perm)
     s2 = segmentedDataset(mother, round(p1*len(mother)), round((p1+p2)*len(mother)), perm)
@@ -59,6 +65,25 @@ def epoch_time(start_time, end_time):
     elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
     return elapsed_mins, elapsed_secs
 
+
+#%% accuracy calculations for a single epoch
+
+def calc_acc(criterion, outputs, labels):
+    if type(criterion) is torch.nn.modules.loss.CrossEntropyLoss:            
+        _, predicted = torch.max(outputs.data, 1)
+        if CUDA:
+            return (predicted.cpu()==labels.cpu()).sum().item()
+        else:
+            return (predicted==labels).sum().item()
+            
+    if (type(criterion) is torch.nn.modules.loss.BCELoss) or (type(criterion) is torch.nn.modules.loss.MSELoss):
+        predicted = torch.round(outputs.data)
+        if CUDA:
+            return (predicted.cpu()==labels.cpu()).sum().item()
+        else:
+            return (predicted==labels).sum().item()
+    
+    return 0
 
 
 #%% automatic training a single epoch
@@ -91,20 +116,8 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
         optimizer.step()
 
         # do necessary accuracy calculation based on output mode
-        if type(criterion) is torch.nn.modules.loss.CrossEntropyLoss:            
-            _, predicted = torch.max(outputs.data, 1)
-            if CUDA:
-                epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-            else:
-                epoch_acc += (predicted==labels).sum().item()
-                
-        if type(criterion) is torch.nn.modules.loss.BCELoss:
-            predicted = torch.round(outputs.data)
-            if CUDA:
-                epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-            else:
-                epoch_acc += (predicted==labels).sum().item()
-            
+        epoch_acc += calc_acc(criterion, outputs, labels)
+                    
         total += labels.size(0)
 
         
@@ -136,19 +149,7 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
     
                 outputs = model(images)
                   
-                if type(criterion) is torch.nn.modules.loss.CrossEntropyLoss:            
-                    _, predicted = torch.max(outputs.data, 1)
-                    if CUDA:
-                        epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-                    else:
-                        epoch_acc += (predicted==labels).sum().item()
-                        
-                if type(criterion) is torch.nn.modules.loss.BCELoss:
-                    predicted = torch.round(outputs.data)
-                    if CUDA:
-                        epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-                    else:
-                        epoch_acc += (predicted==labels).sum().item()
+                epoch_acc += calc_acc(criterion, outputs, labels)
     
                 loss = criterion(outputs, labels)
                 epoch_loss += loss.item()
@@ -168,6 +169,8 @@ def evaluate(model, iterator, criterion):
     epoch_acc = 0
     total = 0
     
+    if CUDA:
+        model = model.cuda()
     model.eval()
     with torch.no_grad():
     
@@ -184,19 +187,7 @@ def evaluate(model, iterator, criterion):
 
             outputs = model(images)
               
-            if type(criterion) is torch.nn.modules.loss.CrossEntropyLoss:            
-                _, predicted = torch.max(outputs.data, 1)
-                if CUDA:
-                    epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-                else:
-                    epoch_acc += (predicted==labels).sum().item()
-                    
-            if type(criterion) is torch.nn.modules.loss.BCELoss:
-                predicted = torch.round(outputs.data)
-                if CUDA:
-                    epoch_acc += (predicted.cpu()==labels.cpu()).sum().item()
-                else:
-                    epoch_acc += (predicted==labels).sum().item()
+            epoch_acc += calc_acc(criterion, outputs, labels)
 
             loss = criterion(outputs, labels)
             epoch_loss += loss.item()
