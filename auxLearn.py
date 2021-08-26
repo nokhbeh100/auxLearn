@@ -48,6 +48,20 @@ class segmentedDataset(data.Dataset):
     def __getitem__(self, i):
         return self.mother[self.perm[self.start+i]]
 #%%
+class cacheDataset(data.Dataset):
+    def __init__(self, motherDataset):
+        self.mother = motherDataset
+        self.cache = {}
+    def __len__(self):
+        return len(self.mother)
+    def __getitem__(self, i):
+        try:
+            return self.cache[i]
+        except:
+            self.cache[i] = self.mother[i]
+            return self.cache[i]
+    
+#%%
 def trainTestValid(mother, p1, p2, p3, seed=None):
     perm = list(range(len(mother)))
     if type(seed) is int:
