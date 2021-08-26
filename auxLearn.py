@@ -48,18 +48,24 @@ class segmentedDataset(data.Dataset):
     def __getitem__(self, i):
         return self.mother[self.perm[self.start+i]]
 #%%
+cacheDatasetCounter = 0
 class cacheDataset(data.Dataset):
     def __init__(self, motherDataset):
         self.mother = motherDataset
-        self.cache = {}
+        self.cachefolder = 'cache_' + str(cacheDatasetCounter); cacheDatasetCounter += 1
+        os.makedirs(self.cachefolder)
+        
     def __len__(self):
         return len(self.mother)
+    
     def __getitem__(self, i):
-        try:
-            return self.cache[i]
-        except:
-            self.cache[i] = self.mother[i]
-            return self.cache[i]
+        cachePath = os.path.join(self.cachefolder, f'{i}.npy')
+        if os.path.exists(cachePath):
+            return torch.load(cachePath)
+        else:
+            obj = self.mother[i]
+            torch.save(obj, cachePath)
+            return obj
     
 #%%
 def trainTestValid(mother, p1, p2, p3, seed=None):
