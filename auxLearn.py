@@ -54,7 +54,8 @@ class cacheDataset(data.Dataset):
         self.mother = motherDataset
         global cacheDatasetCounter
         self.cachefolder = 'cache_' + str(cacheDatasetCounter); cacheDatasetCounter += 1
-        os.makedirs(self.cachefolder)
+        if not(os.path.exists(self.cachefolder)):
+            os.makedirs(self.cachefolder)
         
     def __len__(self):
         return len(self.mother)
