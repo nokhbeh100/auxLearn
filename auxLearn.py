@@ -52,6 +52,7 @@ cacheDatasetCounter = 0
 class cacheDataset(data.Dataset):
     def __init__(self, motherDataset):
         self.mother = motherDataset
+        global cacheDatasetCounter
         self.cachefolder = 'cache_' + str(cacheDatasetCounter); cacheDatasetCounter += 1
         os.makedirs(self.cachefolder)
         
