@@ -133,6 +133,8 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
 
         # forward + backward + optimize
         outputs = model(inputs)
+        if (type(criterion) is torch.nn.modules.loss.MSELoss):
+            labels = labels.to(outputs.dtype)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -208,6 +210,8 @@ def evaluate(model, iterator, criterion):
                 labels = labels.cpu()        
 
             outputs = model(images)
+            if (type(criterion) is torch.nn.modules.loss.MSELoss):
+                labels = labels.to(outputs.dtype)
               
             epoch_acc += calc_acc(criterion, outputs, labels)
 
