@@ -134,12 +134,12 @@ def calc_acc(criterion, outputs, labels):
 
 
 #%% automatic training a single epoch
-def train(model, iterator, optimizer, criterion, hardNeg = False):
+def train(model, iterator, optimizer, criterion, hardNegCriterion = None):
     epoch_loss = 0
     epoch_acc = 0
     total = 0
     model.train()
-    if hardNeg:
+    if hardNegCriterion:
         iterator.dataset.train()
         
     bar = progressbar.ProgressBar(max_value=len(iterator))
@@ -176,7 +176,7 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
     bar.finish()
     
     # if we have hard negative mining then the dataset should be fixed accordingly
-    if hardNeg:
+    if hardNegCriterion:
         n1 = len(iterator.dataset)
         iterator.dataset.eval()
         n2 = len(iterator.dataset)
@@ -197,17 +197,17 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
                     labels = labels.cpu()        
     
                 outputs = model(images)
-                if (type(criterion) is torch.nn.modules.loss.MSELoss):
+                if (type(hardNegCriterion) is torch.nn.modules.loss.MSELoss):
                     labels = labels.to(outputs.dtype)                
                   
-                epoch_acc += calc_acc(criterion, outputs, labels)
+                epoch_acc += calc_acc(hardNegCriterion, outputs, labels)
     
-                loss = criterion(outputs, labels)
-                epoch_loss += loss.item()
-                errVal.append(loss.item())
+                loss = hardNegCriterion(outputs, labels)
+                epoch_loss += torch.mean(loss)
+                errVal.append(loss.numpy())
                 total += labels.size(0)      
             # applying the error function on hard negative enabled dataset
-            iterator.dataset.apply_hardNeg(errVal)
+            iterator.dataset.apply_hardNeg(np.concatenate(errVal))
         
         iterator.dataset.train()
     
@@ -252,7 +252,7 @@ def evaluate(model, iterator, criterion):
         
 
 #%% train for a fixed number of epochs with stopping if not improving in a sequence of smart_stop epochs
-def trainForEpoches(model, trainSet, testSet, optimizer, criterion, N_EPOCHS = 5, smart_stop = 100, resultFile = None, hardNeg = False, bestPlace='.'):
+def trainForEpoches(model, trainSet, testSet, optimizer, criterion, N_EPOCHS = 5, smart_stop = 100, resultFile = None, hardNegCriterion = None, bestPlace='.'):
 
     overfit = 0
     best_valid_loss = float('inf')
@@ -271,7 +271,7 @@ def trainForEpoches(model, trainSet, testSet, optimizer, criterion, N_EPOCHS = 5
         start_time = time.time()
         
         print('\ntraining:')
-        train_loss, train_acc = train(model, trainSet, optimizer, criterion, hardNeg = hardNeg)
+        train_loss, train_acc = train(model, trainSet, optimizer, criterion, hardNegCriterion = hardNegCriterion)
         print('\nevaluating:')
         valid_loss, valid_acc = evaluate(model, testSet, criterion)
         
