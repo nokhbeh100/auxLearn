@@ -68,7 +68,32 @@ class cacheDataset(data.Dataset):
             obj = self.mother[i]
             torch.save(obj, cachePath)
             return obj
+
+#%%
+class hardNegDataset(data.Dataset):
+    '''class written for hard negative training, 
+    DO NOT wrap a casher around it! since things change in here (but you can wrap a casher in it :D).'''
+    def __init__(self, motherDataset, train_size):
+        self.mother = motherDataset
+        self.idx = self.test_idx = np.arange(0, len(motherDataset))
+        self.train_idx = self.test_idx[:train_size]
+        self.train_size = train_size
+        
+    def __len__(self):
+        return len(self.idx)
+
+    def __getitem__(self, sampleNo):
+        return self.mother[self.idx[sampleNo]]
     
+    def apply_hardNeg(self, errVal):
+        self.train_idx = self.test_idx[ np.argsort(errVal)[-self.train_size:] ]
+        
+    def eval(self):
+        self.idx = self.test_idx
+        
+    def train(self):
+        self.idx = self.train_idx
+
 #%%
 def trainTestValid(mother, p1, p2, p3, seed=None):
     perm = list(range(len(mother)))
