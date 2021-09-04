@@ -199,9 +199,7 @@ def train(model, iterator, optimizer, criterion, hardNegCriterion = None):
                 outputs = model(images)
                 if (type(hardNegCriterion) is torch.nn.modules.loss.MSELoss):
                     labels = labels.to(outputs.dtype)                
-                  
-                epoch_acc += calc_acc(hardNegCriterion, outputs, labels)
-    
+                
                 loss = hardNegCriterion(outputs, labels)
                 epoch_loss += torch.mean(loss)
                 errVal.append(loss.cpu().detach().numpy())
