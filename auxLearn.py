@@ -204,7 +204,7 @@ def train(model, iterator, optimizer, criterion, hardNegCriterion = None):
     
                 loss = hardNegCriterion(outputs, labels)
                 epoch_loss += torch.mean(loss)
-                errVal.append(loss.cpu().numpy())
+                errVal.append(loss.cpu().detach().numpy())
                 total += labels.size(0)      
             # applying the error function on hard negative enabled dataset
             iterator.dataset.apply_hardNeg(np.concatenate(errVal))
