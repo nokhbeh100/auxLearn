@@ -184,28 +184,30 @@ def train(model, iterator, optimizer, criterion, hardNegCriterion = None):
         if n1 != n2:            
             model.eval()
             print('hard Negative adaptation:')
-            bar = progressbar.ProgressBar(max_value=len(iterator))
-            errVal = []
-            for i, (images,labels) in enumerate(iterator, 0):
-                bar.update(i)
-    
-                if CUDA:
-                    images = images.cuda()
-                    labels = labels.cuda()
-                else:
-                    images = images.cpu()
-                    labels = labels.cpu()        
-    
-                outputs = model(images)
-                if (type(hardNegCriterion) is torch.nn.modules.loss.MSELoss):
-                    labels = labels.to(outputs.dtype)                
-                
-                loss = hardNegCriterion(outputs, labels)
-                epoch_loss += torch.mean(loss)
-                errVal.append(loss.cpu().detach().numpy())
-                total += labels.size(0)      
-            # applying the error function on hard negative enabled dataset
-            iterator.dataset.apply_hardNeg(np.concatenate(errVal))
+            with torch.no_grad():
+                bar = progressbar.ProgressBar(max_value=len(iterator))
+                errVal = []
+                for i, (images,labels) in enumerate(iterator, 0):
+                    bar.update(i)
+        
+                    if CUDA:
+                        images = images.cuda()
+                        labels = labels.cuda()
+                    else:
+                        images = images.cpu()
+                        labels = labels.cpu()        
+        
+                    outputs = model(images)
+                    if (type(hardNegCriterion) is torch.nn.modules.loss.MSELoss):
+                        labels = labels.to(outputs.dtype)                
+                    
+                    loss = hardNegCriterion(outputs, labels)
+                    epoch_loss += torch.mean(loss)
+                    errVal.append(loss.cpu().numpy())
+                    total += labels.size(0)      
+                # applying the error function on hard negative enabled dataset
+                iterator.dataset.apply_hardNeg(np.concatenate(errVal))
+                bar.finish()
         
         iterator.dataset.train()
     
@@ -244,7 +246,7 @@ def evaluate(model, iterator, criterion):
             epoch_loss += loss.item()
             total += labels.size(0)
 
-    bar.finish()    
+        bar.finish()    
     return epoch_loss / total, epoch_acc / total
 
         
