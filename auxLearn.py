@@ -197,6 +197,8 @@ def train(model, iterator, optimizer, criterion, hardNeg = False):
                     labels = labels.cpu()        
     
                 outputs = model(images)
+                if (type(criterion) is torch.nn.modules.loss.MSELoss):
+                    labels = labels.to(outputs.dtype)                
                   
                 epoch_acc += calc_acc(criterion, outputs, labels)
     
