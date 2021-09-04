@@ -86,7 +86,8 @@ class hardNegDataset(data.Dataset):
         return self.mother[self.idx[sampleNo]]
     
     def apply_hardNeg(self, errVal):
-        self.train_idx = self.test_idx[ np.argsort(errVal)[-self.train_size:] ]
+        self.train_idx = np.where(np.sort(errVal)[-self.train_size] < errVal)        
+        #self.train_idx = self.test_idx[ np.argsort(errVal)[-self.train_size:] ]
         
     def eval(self):
         self.idx = self.test_idx
